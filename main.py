@@ -1,72 +1,101 @@
-import threading
+import time
+import re
+
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from datetime import date
 
-today = date.today()
-today = today.strftime("%d.%m.%Y")
+driver = webdriver.Chrome()
+# waiting until the whole page is loaded
+driver.implicitly_wait(10)
+driver.get("https://blackclover.wbijam.pl/")
+def check():
+    # getting current date
+    today = date.today()
+    today = today.strftime("%d.%m.%Y")
+    
+    # getting day number from current date 
+    td = int(today[:2])
 
-td = int(today[:2])
-
-def naruto():
-    # opening browser with certain site
-    driver = webdriver.Chrome()
-    driver.get("https://naruto.wbijam.pl/")
-
-    # searching for date
+    # searching for emission date
     table = driver.find_element_by_class_name("lista")
     dates = table.find_elements_by_class_name("lista_td")
+
+    # handling error with upcoming series
+    daty = []
+    r = re.compile("^[\d]{1,2}[.][\d]{1,2}[.][\d]{4}")
+
+    for dat in dates:
+        if dat.text == "nadchodzi" or not r.match(dat.text):
+            continue
+        else:
+            daty.append(dat.text)
 
     # searching for results
     results = table.find_elements_by_class_name("lista_td_calendar")
 
+    
     time = []
-
-    n = len(dates) - 1
-
+    n = len(daty)
+    temp = ""
     for i in range(n):
-        temp = dates[i].text
+        if r.match(daty[i]):
+            temp = daty[i]
         txt = results[i].text
         time.append([int(temp[:2]), txt])
 
+
+    noti = ""
     for day, result in time:
-        sub = day - td
-        if sub == 0 and result == "zakończony":
-            print("Go watch now!")
-        elif sub == 0:
-            print("Today is a day!")
-        else:
-            print("Not today :(")
+        if td == day:
+            if result == "zakończony":
+                noti = "Go watch now"
+            elif result == "TŁUMACZENIE":
+                noti = "Wait for the episode translation"
+            else:
+                noti = "Today is a day"
             break
+        else:
+            noti = "Not today"
+    return noti
 
-#    # collecting dates
-#    for date in dates:
-#        temp = date.text
-#        time_str.append(temp[:2])
-#
-#    # converting string list to int list
-#    time = list(map(int, time_str))
-#
-#    # checking if today is a day
-#
-#    for day in time:
-#        result = day - td
-#        if result == 0 and :
-#            print("Today is a day")
-    
-    driver.quit()
-naruto()
+right = driver.find_element_by_id("menu_prawa")
+lists = right.find_elements_by_tag_name("li")
 
-def drstone():
-    driver = webdriver.Chrome()
-    driver.get("https://drstone.wbijam.pl/#")
+n = len(lists) - 1
+start, end = 0, 0
+series = []
+final = []
 
-    table = driver.find_element_by_class_name("lista")
-    dates = table.find_elements_by_class_name("lista_td_calendar")
+# searching for ongoing anime series
+for i in range(n):
+    if lists[i].text == "Wychodzące/ongoing:":
+        start = i + 1
+    if lists[i].text == "Zakończone/wstrzymane:":
+        end = i
+for j in range(start, end):
+    series.append(lists[j].text)
 
-    for date in dates:
-        if date.text == "zakończony":
-            continue
-        print(date.text)
-    driver.quit()    
+# accepting privacy settings
+rodo = driver.find_element_by_class_name("details_save--3nDG7")
+rodo.click()
+# accepting cookies
+cookie = driver.find_element_by_id("simplecookienotificationokbutton")
+cookie.click()
+
+# final loop
+for serie in series:
+    link = driver.find_element_by_link_text(serie)
+    link.click()
+    time.sleep(5)
+    ch = check()
+    final.append([serie, ch])
+    time.sleep(10)
+
+# some pretty display format
+s = [[str(e) for e in row] for row in final]
+lens = [max(map(len, col)) for col in zip(*s)]
+fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
+table = [fmt.format(*row) for row in s]
+print('\n'.join(table))
 
