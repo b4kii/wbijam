@@ -9,13 +9,14 @@ driver = webdriver.Chrome()
 # waiting until the whole page is loaded
 driver.implicitly_wait(10)
 driver.get("https://blackclover.wbijam.pl/")
+
 def check():
     # getting current date
     today = date.today()
     today = today.strftime("%d.%m.%Y")
     
-    # getting day number from current date 
-    td = int(today[:2])
+    # getting day and month number from current date 
+    td = today[:5]
 
     # searching for emission date
     table = driver.find_element_by_class_name("lista")
@@ -34,7 +35,6 @@ def check():
     # searching for results
     results = table.find_elements_by_class_name("lista_td_calendar")
 
-    
     time = []
     n = len(daty)
     temp = ""
@@ -42,8 +42,7 @@ def check():
         if r.match(daty[i]):
             temp = daty[i]
         txt = results[i].text
-        time.append([int(temp[:2]), txt])
-
+        time.append([temp[:5], txt])
 
     noti = ""
     for day, result in time:
@@ -64,8 +63,7 @@ lists = right.find_elements_by_tag_name("li")
 
 n = len(lists) - 1
 start, end = 0, 0
-series = []
-final = []
+series, final = [], []
 
 # searching for ongoing anime series
 for i in range(n):
