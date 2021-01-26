@@ -5,9 +5,10 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from datetime import date
 
-driver = webdriver.Chrome()
+path = "C:/Users/b4ki/chromedriver.exe"
+driver = webdriver.Chrome(path)
 # waiting until the whole page is loaded
-driver.implicitly_wait(10)
+driver.implicitly_wait(5)
 driver.get("https://blackclover.wbijam.pl/")
 
 def check():
@@ -88,12 +89,11 @@ for serie in series:
     time.sleep(5)
     ch = check()
     final.append([serie, ch])
-    time.sleep(10)
+    time.sleep(5)
 
 # some pretty display format
 s = [[str(e) for e in row] for row in final]
 lens = [max(map(len, col)) for col in zip(*s)]
 fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
-table = [fmt.format(*row) for row in s]
-print('\n'.join(table))
-
+tab = [fmt.format(*row) for row in s]
+print('\n'.join(tab))
